@@ -2,10 +2,10 @@ import type { Metadata } from 'next';
 import { GeistSans } from 'geist/font/sans';
 import './globals.css';
 
-const geistSans = GeistSans({ 
-  variable: '--font-geist-sans',
-  subsets: ['latin'],
-});
+// const geistSans = GeistSans({ // This was incorrect
+//   variable: '--font-geist-sans',
+//   subsets: ['latin'],
+// });
 
 export const metadata: Metadata = {
   title: 'ComPass - AI Travel Planner',
@@ -18,7 +18,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={geistSans.variable}> {/* Apply font variable to html tag */}
+    <html lang="en" className={GeistSans.variable}> {/* Use GeistSans.variable directly */}
       <body className="antialiased"> {/* Removed font class from body as it's on html */}
         {children}
       </body>
