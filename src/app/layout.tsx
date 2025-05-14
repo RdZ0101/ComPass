@@ -1,6 +1,9 @@
+
 import type { Metadata } from 'next';
 import { GeistSans } from 'geist/font/sans';
 import './globals.css';
+import { AuthProvider } from '@/contexts/AuthContext'; // Import AuthProvider
+import { Toaster } from "@/components/ui/toaster"; // Ensure Toaster is available globally
 
 export const metadata: Metadata = {
   title: 'ComPass - AI Travel Planner',
@@ -15,7 +18,10 @@ export default function RootLayout({
   return (
     <html lang="en" className={GeistSans.variable}>
       <body className="antialiased">
-        {children}
+        <AuthProvider> {/* Wrap children with AuthProvider */}
+          {children}
+          <Toaster /> {/* Toaster for auth notifications */}
+        </AuthProvider>
       </body>
     </html>
   );
