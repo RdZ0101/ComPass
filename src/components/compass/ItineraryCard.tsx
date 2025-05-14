@@ -13,7 +13,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Heart, Trash2, ThermometerSnowflake, CloudSun, MapPin, CalendarDays, Edit3, Users, Sun } from 'lucide-react';
-import type { ItineraryData, CrowdType } from "@/lib/types";
+import type { ItineraryData, CrowdType, UpdateItineraryParams } from "@/lib/types";
 import { format, parseISO, formatDistanceToNow } from 'date-fns';
 
 interface ItineraryCardProps {
@@ -21,6 +21,7 @@ interface ItineraryCardProps {
   onSave?: (itinerary: ItineraryData) => void;
   onRemove?: (id: string) => void;
   isSaved?: boolean;
+ onUpdate?: (updateData: UpdateItineraryParams) => Promise<void>;
 }
 
 const crowdTypeLabels: Record<CrowdType, string> = {
@@ -32,7 +33,7 @@ const crowdTypeLabels: Record<CrowdType, string> = {
 };
 
 export function ItineraryCard({ itineraryData, onSave, onRemove, isSaved }: ItineraryCardProps) {
-  const { 
+  const {
     id, 
     destination, 
     preferences: rawPreferences, 
@@ -43,7 +44,7 @@ export function ItineraryCard({ itineraryData, onSave, onRemove, isSaved }: Itin
     startDate: rawStartDate, 
     endDate: rawEndDate, 
     isDayTrip: rawIsDayTrip 
-  } = itineraryData;
+  } = itineraryData; // Destructure itineraryData directly
 
   // Provide defaults for potentially missing fields
   const preferences = rawPreferences ?? "Preferences not specified.";
@@ -64,7 +65,7 @@ export function ItineraryCard({ itineraryData, onSave, onRemove, isSaved }: Itin
       return "Invalid Date";
     }
   };
-  
+
   const formattedStartDate = parseAndFormatDate(rawStartDate);
   const formattedEndDate = rawEndDate ? parseAndFormatDate(rawEndDate, "") : ""; // Allow empty if rawEndDate is undefined
 
@@ -86,7 +87,6 @@ export function ItineraryCard({ itineraryData, onSave, onRemove, isSaved }: Itin
 
   const currentCrowdLabel = crowdTypeLabels[crowdType as CrowdType] || crowdTypeLabels.solo;
 
-
   return (
     <Card className="shadow-lg break-inside-avoid-column">
       <CardHeader>
@@ -97,7 +97,7 @@ export function ItineraryCard({ itineraryData, onSave, onRemove, isSaved }: Itin
             </CardTitle>
             <CardDescription className="mt-1 flex flex-col sm:flex-row sm:items-center sm:space-x-2 space-y-1 sm:space-y-0">
               <span className="flex items-center"><CalendarDays className="mr-1 h-4 w-4" /> {tripDurationString}</span>
-              <span className="hidden sm:inline">•</span> 
+              <span className="hidden sm:inline">•</span>
               <span className="flex items-center"><Users className="mr-1 h-4 w-4" /> {currentCrowdLabel}</span>
             </CardDescription>
             <CardDescription className="mt-1 text-xs">
@@ -116,7 +116,7 @@ export function ItineraryCard({ itineraryData, onSave, onRemove, isSaved }: Itin
             </h3>
             <p className="text-sm text-muted-foreground italic bg-secondary p-3 rounded-md">{preferences}</p>
           </div>
-          
+
           <Separator />
 
           <div>
@@ -127,7 +127,7 @@ export function ItineraryCard({ itineraryData, onSave, onRemove, isSaved }: Itin
           </div>
 
           <Separator />
-          
+
           <div>
             <h3 className="font-semibold text-lg mb-1">Weather Outlook</h3>
             <Badge variant="outline" className="text-sm py-1 px-3">{weather}</Badge>
@@ -145,6 +145,10 @@ export function ItineraryCard({ itineraryData, onSave, onRemove, isSaved }: Itin
             <Heart className="mr-2 h-4 w-4 fill-current" /> Saved
           </Badge>
         )}
+        {/* Add Edit Button */}
+        <Button variant="ghost" onClick={() => {/* TODO: Open Edit Modal */}} className="text-primary hover:bg-primary/10">
+          <Edit3 className="mr-2 h-4 w-4" /> Edit
+        </Button>
         {onRemove && (
           <Button variant="ghost" onClick={() => onRemove(id)} className="text-destructive hover:bg-destructive/10">
             <Trash2 className="mr-2 h-4 w-4" /> Remove

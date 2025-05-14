@@ -3,6 +3,7 @@
 
 import { generateItinerary } from '@/ai/flows/itinerary-generation';
 import type { GenerateItineraryInput as AIItineraryInput, GenerateItineraryOutput } from '@/ai/flows/itinerary-generation'; // Renamed to avoid conflict
+import { updateItineraryForUser } from '@/lib/firebase/firestore';
 import type { ItineraryData, ItineraryGenerationInput } from '@/lib/types';
 
 const mockWeathers = [
@@ -53,5 +54,14 @@ export async function runGenerateItineraryAction(
     console.error("Error generating itinerary:", e);
     const errorMessage = e instanceof Error ? e.message : "An unknown error occurred during itinerary generation.";
     return { error: errorMessage };
+  }
+}
+
+export async function updateItinerary(userId: string, itineraryId: string, updatedItineraryData: Partial<ItineraryData>): Promise<{ success: boolean; error?: string }> {
+  try {
+    await updateItineraryForUser(userId, itineraryId, updatedItineraryData);
+    return { success: true };
+  } catch (e) {
+    return { success: false, error: e instanceof Error ? e.message : "An unknown error occurred while updating the itinerary." };
   }
 }
