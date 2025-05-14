@@ -19,9 +19,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { useAuth } from "@/contexts/AuthContext";
 import { Separator } from "@/components/ui/separator";
-import { KeyRound, Mail, UserPlus } from "lucide-react";
+import { KeyRound, Mail, UserPlus, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Invalid email address." }),
@@ -37,12 +37,17 @@ type FormValues = z.infer<typeof formSchema>;
 export default function SignupPage() {
   const { signUpWithEmail, isLoading, user } = useAuth();
   const router = useRouter();
+  const [hasMounted, setHasMounted] = useState(false);
 
   useEffect(() => {
-    if (user) {
-      router.push('/'); // Redirect if already logged in
+    setHasMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (user && hasMounted) {
+      router.push('/'); // Redirect if already logged in and component has mounted
     }
-  }, [user, router]);
+  }, [user, router, hasMounted]);
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -56,6 +61,14 @@ export default function SignupPage() {
   async function onSubmit(values: FormValues) {
     await signUpWithEmail(values.email, values.password);
     // Redirection is handled within signUpWithEmail on success
+  }
+
+  if (!hasMounted) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
   }
 
   if (user) { // Render nothing or a loading indicator while redirecting
