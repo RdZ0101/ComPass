@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -13,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import useLocalStorage from "@/hooks/use-local-storage";
 import { runGenerateItineraryAction } from "./actions";
 import type { ItineraryData, ItineraryGenerationInput } from "@/lib/types";
-import { BookHeart, History, AlertCircle } from "lucide-react";
+import { BookHeart, History, AlertCircle, Loader2 } from "lucide-react";
 import { Toaster } from "@/components/ui/toaster";
 
 
@@ -23,6 +24,11 @@ export default function HomePage() {
   const [error, setError] = useState<string | null>(null);
   const [savedItineraries, setSavedItineraries] = useLocalStorage<ItineraryData[]>("compass-saved-itineraries", []);
   const { toast } = useToast();
+  const [hasMounted, setHasMounted] = useState(false);
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
 
   const handleGenerateItinerary = async (values: ItineraryGenerationInput) => {
     setIsLoading(true);
@@ -69,6 +75,7 @@ export default function HomePage() {
   };
 
   const isItinerarySaved = (itineraryId: string): boolean => {
+    if (!hasMounted) return false; // Avoid checking localStorage before mount
     return savedItineraries.some(saved => saved.id === itineraryId);
   }
 
@@ -109,10 +116,18 @@ export default function HomePage() {
           <h2 id="saved-itineraries-title" className="text-2xl font-semibold text-primary mb-6 flex items-center">
             <History className="mr-3 h-7 w-7" /> Saved Itineraries
           </h2>
-          <SavedItinerariesList
-            savedItineraries={savedItineraries}
-            onRemove={handleRemoveItinerary}
-          />
+          {!hasMounted && (
+            <div className="flex flex-col items-center justify-center space-y-2 py-8 text-muted-foreground">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <p>Loading saved itineraries...</p>
+            </div>
+          )}
+          {hasMounted && (
+            <SavedItinerariesList
+              savedItineraries={savedItineraries}
+              onRemove={handleRemoveItinerary}
+            />
+          )}
         </section>
       </main>
       <footer className="text-center py-6 border-t bg-card">
