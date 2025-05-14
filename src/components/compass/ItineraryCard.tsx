@@ -32,16 +32,60 @@ const crowdTypeLabels: Record<CrowdType, string> = {
 };
 
 export function ItineraryCard({ itineraryData, onSave, onRemove, isSaved }: ItineraryCardProps) {
-  const { id, destination, preferences, itinerary, weather, createdAt, crowdType, startDate, endDate, isDayTrip } = itineraryData;
+  const { 
+    id, 
+    destination, 
+    preferences: rawPreferences, 
+    itinerary: rawItinerary, 
+    weather: rawWeather, 
+    createdAt: rawCreatedAt, 
+    crowdType: rawCrowdType, 
+    startDate: rawStartDate, 
+    endDate: rawEndDate, 
+    isDayTrip: rawIsDayTrip 
+  } = itineraryData;
 
-  const formattedCreatedAt = formatDistanceToNow(new Date(createdAt), { addSuffix: true });
+  // Provide defaults for potentially missing fields
+  const preferences = rawPreferences ?? "Preferences not specified.";
+  const itinerary = rawItinerary ?? "Itinerary details not available.";
+  const weather = rawWeather ?? "Weather data unavailable.";
+  const createdAt = rawCreatedAt ? formatDistanceToNow(new Date(rawCreatedAt), { addSuffix: true }) : "Recently created";
+  const crowdType = rawCrowdType ?? 'solo'; // Default if undefined
+  const isDayTrip = rawIsDayTrip ?? false; // Default if undefined
+
+  const parseAndFormatDate = (dateStr: string | undefined, defaultText: string = "Date not set"): string => {
+    if (!dateStr) {
+      return defaultText;
+    }
+    try {
+      return format(parseISO(dateStr), "MMM d, yyyy");
+    } catch (error) {
+      console.warn(`Error parsing date for itinerary ${id}:`, dateStr, error);
+      return "Invalid Date";
+    }
+  };
   
-  const formattedStartDate = format(parseISO(startDate), "MMM d, yyyy");
-  const formattedEndDate = endDate ? format(parseISO(endDate), "MMM d, yyyy") : "";
+  const formattedStartDate = parseAndFormatDate(rawStartDate);
+  const formattedEndDate = rawEndDate ? parseAndFormatDate(rawEndDate, "") : ""; // Allow empty if rawEndDate is undefined
 
-  const tripDurationString = isDayTrip 
-    ? `Day trip on ${formattedStartDate}`
-    : `From ${formattedStartDate} to ${formattedEndDate}`;
+  let tripDurationString = "Trip dates not specified";
+  if (formattedStartDate !== "Date not set" && formattedStartDate !== "Invalid Date") {
+    if (isDayTrip) {
+      tripDurationString = `Day trip on ${formattedStartDate}`;
+    } else {
+      if (formattedEndDate && formattedEndDate !== "Invalid Date") {
+        tripDurationString = `From ${formattedStartDate} to ${formattedEndDate}`;
+      } else {
+        // If it's not a day trip but endDate is missing/invalid, just show start date
+        tripDurationString = `Trip starting ${formattedStartDate}`;
+      }
+    }
+  } else if (isDayTrip) { // If startDate is not set but it's a day trip
+    tripDurationString = "Day trip (date not set)";
+  }
+
+  const currentCrowdLabel = crowdTypeLabels[crowdType as CrowdType] || crowdTypeLabels.solo;
+
 
   return (
     <Card className="shadow-lg break-inside-avoid-column">
@@ -49,19 +93,19 @@ export function ItineraryCard({ itineraryData, onSave, onRemove, isSaved }: Itin
         <div className="flex justify-between items-start">
           <div>
             <CardTitle className="text-2xl text-primary flex items-center">
-              <MapPin className="mr-2 h-6 w-6 text-accent" /> {destination}
+              <MapPin className="mr-2 h-6 w-6 text-accent" /> {destination || "Unknown Destination"}
             </CardTitle>
             <CardDescription className="mt-1 flex flex-col sm:flex-row sm:items-center sm:space-x-2 space-y-1 sm:space-y-0">
               <span className="flex items-center"><CalendarDays className="mr-1 h-4 w-4" /> {tripDurationString}</span>
               <span className="hidden sm:inline">•</span> 
-              <span className="flex items-center"><Users className="mr-1 h-4 w-4" /> {crowdTypeLabels[crowdType]}</span>
+              <span className="flex items-center"><Users className="mr-1 h-4 w-4" /> {currentCrowdLabel}</span>
             </CardDescription>
             <CardDescription className="mt-1 text-xs">
-              Created {formattedCreatedAt}
+              Created {createdAt}
             </CardDescription>
           </div>
           {isDayTrip && <Sun className="h-8 w-8 text-orange-500" />}
-          {!isDayTrip && (weather.toLowerCase().includes("sun") || weather.toLowerCase().includes("clear") ? <CloudSun className="h-8 w-8 text-yellow-500" /> : <ThermometerSnowflake className="h-8 w-8 text-blue-400" />)}
+          {!isDayTrip && weather && weather !== "Weather data unavailable" && (weather.toLowerCase().includes("sun") || weather.toLowerCase().includes("clear") ? <CloudSun className="h-8 w-8 text-yellow-500" /> : <ThermometerSnowflake className="h-8 w-8 text-blue-400" />)}
         </div>
       </CardHeader>
       <CardContent>
