@@ -19,8 +19,8 @@ import { getUserItineraries, saveItineraryForUser, deleteItineraryForUser } from
 
 export default function HomePage() {
   const [generatedItinerary, setGeneratedItinerary] = useState<ItineraryData | null>(null);
-  const [isLoadingApi, setIsLoadingApi] = useState(false); // Renamed to avoid conflict
-  const [apiError, setApiError] = useState<string | null>(null); // Renamed
+  const [isLoadingApi, setIsLoadingApi] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
   
   const { user, isLoading: isLoadingUser } = useAuth();
   const [savedItineraries, setSavedItineraries] = useState<ItineraryData[]>([]);
@@ -31,7 +31,7 @@ export default function HomePage() {
   const [hasMounted, setHasMounted] = useState(false);
 
   useEffect(() => {
-    setHasMounted(true); // For localStorage dependent components, still useful for general hydration
+    setHasMounted(true);
   }, []);
 
   useEffect(() => {
@@ -43,18 +43,32 @@ export default function HomePage() {
           const itineraries = await getUserItineraries(user.uid);
           setSavedItineraries(itineraries);
         } catch (err) {
-          console.error("Error fetching itineraries:", err);
-          const errorMessage = err instanceof Error ? err.message : "An unknown error occurred.";
-          setFirestoreError(`Failed to load saved itineraries: ${errorMessage}`);
-          toast({ variant: "destructive", title: "Loading Error", description: `Could not fetch your itineraries. ${errorMessage}` });
+          console.error("Full error object when fetching itineraries:", err); 
+          const errorMessage = err instanceof Error ? err.message : "An unknown error occurred while fetching itineraries.";
+          
+          setFirestoreError(errorMessage); 
+
+          let toastDescription = `Could not load your itineraries. Details: ${errorMessage}.`;
+          if (errorMessage.toLowerCase().includes("index") || errorMessage.toLowerCase().includes("order by") || errorMessage.toLowerCase().includes("order_by")) {
+            toastDescription += "\n\nThis often indicates a missing Firestore index for the 'createdAt' field. Please check your browser's developer console (usually F12) for a more specific error message from Firebase. It might include a direct link to create the required index in your Firebase project console (Firestore Database > Indexes).";
+          } else {
+            toastDescription += "\n\nPlease check your browser's developer console for more specific error details from Firebase.";
+          }
+
+          toast({ 
+            variant: "destructive", 
+            title: "Error Loading Saved Itineraries", 
+            description: toastDescription,
+            duration: 20000 // Increased duration for readability
+          });
         } finally {
           setIsFetchingItineraries(false);
         }
       };
       fetchItineraries();
     } else if (!user && !isLoadingUser) {
-      setSavedItineraries([]); // Clear itineraries if user logs out or isn't loaded
-      setIsFetchingItineraries(false); // No fetching if no user
+      setSavedItineraries([]); 
+      setIsFetchingItineraries(false); 
     }
   }, [user, isLoadingUser, toast]);
 
@@ -96,8 +110,7 @@ export default function HomePage() {
     }
     try {
       await saveItineraryForUser(user.uid, itineraryToSave);
-      // Optimistically update UI: add to the beginning as list is sorted by newest
-      setSavedItineraries(prev => [itineraryToSave, ...prev]);
+      setSavedItineraries(prev => [itineraryToSave, ...prev].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
       toast({
         title: "Itinerary Saved!",
         description: `${itineraryToSave.destination} has been saved to your account.`,
@@ -125,7 +138,6 @@ export default function HomePage() {
     }
     try {
       await deleteItineraryForUser(user.uid, id);
-      // Optimistically update UI
       setSavedItineraries(prev => prev.filter((item) => item.id !== id));
       toast({
         title: "Itinerary Removed",
@@ -192,7 +204,7 @@ export default function HomePage() {
           <h2 id="saved-itineraries-title" className="text-2xl font-semibold text-primary mb-6 flex items-center">
             <History className="mr-3 h-7 w-7" /> Saved Itineraries
           </h2>
-          {(isLoadingUser || (user && isFetchingItineraries)) && ( // Show loading if user is loading OR if user exists and itineraries are fetching
+          {(isLoadingUser || (user && isFetchingItineraries)) && (
             <div className="flex flex-col items-center justify-center space-y-2 py-8 text-muted-foreground">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
               <p>Loading saved itineraries...</p>
@@ -207,8 +219,8 @@ export default function HomePage() {
             </div>
           )}
 
-          {firestoreError && !isFetchingItineraries && (
-            <Alert variant="destructive" className="shadow-md">
+          {firestoreError && !isFetchingItineraries && user && hasMounted && (
+            <Alert variant="destructive" className="shadow-md whitespace-pre-wrap">
               <AlertCircle className="h-5 w-5" />
               <AlertTitle>Error Loading Saved Itineraries</AlertTitle>
               <AlertDescription>{firestoreError}</AlertDescription>

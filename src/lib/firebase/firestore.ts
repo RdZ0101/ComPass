@@ -16,7 +16,8 @@ export async function saveItineraryForUser(userId: string, itinerary: ItineraryD
     await setDoc(itineraryDocRef, itinerary);
   } catch (error) {
     console.error("Error saving itinerary to Firestore:", error);
-    throw new Error("Failed to save itinerary.");
+    const specificMessage = error instanceof Error ? error.message : "Unknown Firestore error occurred while saving.";
+    throw new Error(`Failed to save itinerary: ${specificMessage}`);
   }
 }
 
@@ -30,7 +31,6 @@ export async function getUserItineraries(userId: string): Promise<ItineraryData[
     const querySnapshot = await getDocs(q);
     
     return querySnapshot.docs.map(docSnapshot => {
-      // Explicitly structure the object to match ItineraryData, ensuring id is from docSnapshot.id
       const data = docSnapshot.data();
       return {
         id: docSnapshot.id,
@@ -38,7 +38,7 @@ export async function getUserItineraries(userId: string): Promise<ItineraryData[
         preferences: data.preferences,
         itinerary: data.itinerary,
         weather: data.weather,
-        createdAt: data.createdAt, // Assuming createdAt is stored as ISO string
+        createdAt: data.createdAt, 
         crowdType: data.crowdType,
         startDate: data.startDate,
         endDate: data.endDate,
@@ -47,7 +47,9 @@ export async function getUserItineraries(userId: string): Promise<ItineraryData[
     });
   } catch (error) {
     console.error("Error fetching itineraries from Firestore:", error);
-    throw new Error("Failed to fetch itineraries.");
+    // Propagate a more specific error message
+    const specificMessage = error instanceof Error ? error.message : "Unknown Firestore error occurred during fetch.";
+    throw new Error(`Failed to fetch itineraries. Firestore error: ${specificMessage}`);
   }
 }
 
@@ -60,6 +62,7 @@ export async function deleteItineraryForUser(userId: string, itineraryId: string
     await deleteDoc(itineraryDocRef);
   } catch (error) {
     console.error("Error deleting itinerary from Firestore:", error);
-    throw new Error("Failed to delete itinerary.");
+    const specificMessage = error instanceof Error ? error.message : "Unknown Firestore error occurred while deleting.";
+    throw new Error(`Failed to delete itinerary: ${specificMessage}`);
   }
 }
