@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -11,10 +12,9 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Heart, Trash2, ThermometerSnowflake, CloudSun, MapPin, CalendarDays, Edit3 } from 'lucide-react';
-import type { ItineraryData } from "@/lib/types";
-import { formatDistanceToNow } from 'date-fns';
-
+import { Heart, Trash2, ThermometerSnowflake, CloudSun, MapPin, CalendarDays, Edit3, Users, Sun } from 'lucide-react';
+import type { ItineraryData, CrowdType } from "@/lib/types";
+import { format, parseISO, formatDistanceToNow } from 'date-fns';
 
 interface ItineraryCardProps {
   itineraryData: ItineraryData;
@@ -23,10 +23,25 @@ interface ItineraryCardProps {
   isSaved?: boolean;
 }
 
-export function ItineraryCard({ itineraryData, onSave, onRemove, isSaved }: ItineraryCardProps) {
-  const { id, destination, preferences, itinerary, weather, createdAt } = itineraryData;
+const crowdTypeLabels: Record<CrowdType, string> = {
+  solo: "Solo Traveler",
+  couple: "Couple",
+  family: "Family",
+  friends: "Friends",
+  business: "Business Trip",
+};
 
-  const formattedDate = formatDistanceToNow(new Date(createdAt), { addSuffix: true });
+export function ItineraryCard({ itineraryData, onSave, onRemove, isSaved }: ItineraryCardProps) {
+  const { id, destination, preferences, itinerary, weather, createdAt, crowdType, startDate, endDate, isDayTrip } = itineraryData;
+
+  const formattedCreatedAt = formatDistanceToNow(new Date(createdAt), { addSuffix: true });
+  
+  const formattedStartDate = format(parseISO(startDate), "MMM d, yyyy");
+  const formattedEndDate = endDate ? format(parseISO(endDate), "MMM d, yyyy") : "";
+
+  const tripDurationString = isDayTrip 
+    ? `Day trip on ${formattedStartDate}`
+    : `From ${formattedStartDate} to ${formattedEndDate}`;
 
   return (
     <Card className="shadow-lg break-inside-avoid-column">
@@ -36,11 +51,17 @@ export function ItineraryCard({ itineraryData, onSave, onRemove, isSaved }: Itin
             <CardTitle className="text-2xl text-primary flex items-center">
               <MapPin className="mr-2 h-6 w-6 text-accent" /> {destination}
             </CardTitle>
-            <CardDescription className="mt-1 flex items-center">
-              <CalendarDays className="mr-2 h-4 w-4 text-muted-foreground" /> Created {formattedDate}
+            <CardDescription className="mt-1 flex flex-col sm:flex-row sm:items-center sm:space-x-2 space-y-1 sm:space-y-0">
+              <span className="flex items-center"><CalendarDays className="mr-1 h-4 w-4" /> {tripDurationString}</span>
+              <span className="hidden sm:inline">•</span> 
+              <span className="flex items-center"><Users className="mr-1 h-4 w-4" /> {crowdTypeLabels[crowdType]}</span>
+            </CardDescription>
+            <CardDescription className="mt-1 text-xs">
+              Created {formattedCreatedAt}
             </CardDescription>
           </div>
-          {weather.toLowerCase().includes("sun") || weather.toLowerCase().includes("clear") ? <CloudSun className="h-8 w-8 text-yellow-500" /> : <ThermometerSnowflake className="h-8 w-8 text-blue-400" />}
+          {isDayTrip && <Sun className="h-8 w-8 text-orange-500" />}
+          {!isDayTrip && (weather.toLowerCase().includes("sun") || weather.toLowerCase().includes("clear") ? <CloudSun className="h-8 w-8 text-yellow-500" /> : <ThermometerSnowflake className="h-8 w-8 text-blue-400" />)}
         </div>
       </CardHeader>
       <CardContent>

@@ -8,12 +8,13 @@ import { ItineraryCard } from "@/components/compass/ItineraryCard";
 import { SavedItinerariesList } from "@/components/compass/SavedItinerariesList";
 import { LoadingSpinner } from "@/components/compass/LoadingSpinner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
+// Button removed as it's not directly used on this page anymore
+// import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import useLocalStorage from "@/hooks/use-local-storage";
 import { runGenerateItineraryAction } from "./actions";
-import type { ItineraryData, ItineraryGenerationInput } from "@/lib/types";
+import type { ItineraryData, ItineraryGenerationInput } from "@/lib/types"; // ItineraryGenerationInput type is now more detailed
 import { BookHeart, History, AlertCircle, Loader2 } from "lucide-react";
 import { Toaster } from "@/components/ui/toaster";
 
@@ -35,6 +36,8 @@ export default function HomePage() {
     setError(null);
     setGeneratedItinerary(null);
 
+    // Values already include all new fields (crowdType, startDate, endDate, isDayTrip)
+    // and dates are pre-formatted to YYYY-MM-DD strings by ItineraryForm
     const result = await runGenerateItineraryAction(values);
 
     setIsLoading(false);
@@ -75,7 +78,7 @@ export default function HomePage() {
   };
 
   const isItinerarySaved = (itineraryId: string): boolean => {
-    if (!hasMounted) return false; // Avoid checking localStorage before mount
+    if (!hasMounted) return false; 
     return savedItineraries.some(saved => saved.id === itineraryId);
   }
 
@@ -109,6 +112,15 @@ export default function HomePage() {
             />
           </section>
         )}
+
+        {!isLoading && !generatedItinerary && !error && hasMounted && (
+           <div className="text-center py-10 text-muted-foreground">
+            <BookHeart className="mx-auto h-12 w-12 mb-4 text-primary opacity-50" />
+            <p className="text-lg">Ready to plan your next adventure?</p>
+            <p>Fill out the form above to generate your personalized itinerary!</p>
+          </div>
+        )}
+
 
         <Separator className="my-8" />
 

@@ -1,8 +1,9 @@
+
 "use server";
 
 import { generateItinerary } from '@/ai/flows/itinerary-generation';
-import type { GenerateItineraryInput, GenerateItineraryOutput } from '@/ai/flows/itinerary-generation';
-import type { ItineraryData } from '@/lib/types';
+import type { GenerateItineraryInput as AIItineraryInput, GenerateItineraryOutput } from '@/ai/flows/itinerary-generation'; // Renamed to avoid conflict
+import type { ItineraryData, ItineraryGenerationInput } from '@/lib/types';
 
 const mockWeathers = [
   "Sunny, 28°C. Gentle breeze.",
@@ -17,10 +18,21 @@ function getRandomWeather(): string {
 }
 
 export async function runGenerateItineraryAction(
-  input: GenerateItineraryInput
+  input: ItineraryGenerationInput // This type comes from @/lib/types
 ): Promise<{ data?: ItineraryData; error?: string }> {
   try {
-    const result: GenerateItineraryOutput = await generateItinerary(input);
+    // The AI flow expects AIItineraryInput which matches structure but might have different Zod specifics
+    const aiInput: AIItineraryInput = {
+      destination: input.destination,
+      preferences: input.preferences,
+      crowdType: input.crowdType,
+      startDate: input.startDate,
+      endDate: input.isDayTrip ? undefined : input.endDate, // Ensure endDate is undefined for day trips for the AI
+      isDayTrip: input.isDayTrip,
+    };
+
+    const result: GenerateItineraryOutput = await generateItinerary(aiInput);
+    
     if (result.itinerary) {
       const itineraryData: ItineraryData = {
         id: new Date().toISOString(),
@@ -29,6 +41,10 @@ export async function runGenerateItineraryAction(
         itinerary: result.itinerary,
         weather: getRandomWeather(),
         createdAt: new Date().toISOString(),
+        crowdType: input.crowdType,
+        startDate: input.startDate,
+        endDate: input.isDayTrip ? undefined : input.endDate,
+        isDayTrip: input.isDayTrip,
       };
       return { data: itineraryData };
     }
