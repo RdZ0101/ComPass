@@ -39,7 +39,8 @@ const generateItineraryPrompt = ai.definePrompt({
   prompt: `You are a travel expert. Generate a personalized travel itinerary.
 
 Destination: {{{destination}}}
-Traveler Profile: This trip is for {{#if (eq crowdType "family")}}a {{crowdType}} with kids{{else}}a {{crowdType}}{{/if}}.
+Traveler Profile Details:
+- Crowd Type: {{crowdType}} (Interpret 'family' as including children. For other types, phrase naturally, e.g., 'a solo traveler' or 'a couple').
 Trip Duration:
 {{#if isDayTrip}}
 This is a day trip on {{startDate}}.
@@ -63,3 +64,4 @@ const generateItineraryFlow = ai.defineFlow(
     return output!;
   }
 );
+
