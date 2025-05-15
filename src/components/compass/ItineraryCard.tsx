@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -12,10 +11,12 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Heart, Trash2, ThermometerSnowflake, CloudSun, MapPin, CalendarDays, Edit3, Users, Sun } from 'lucide-react';
+import { Heart, Trash2, ThermometerSnowflake, CloudSun, MapPin, CalendarDays, Edit3, Users, Sun, Map } from 'lucide-react';
 import type { ItineraryData, CrowdType } from "@/lib/types";
 import { format, parseISO, formatDistanceToNow } from 'date-fns';
-import ReactMarkdown from 'react-markdown'; // Import ReactMarkdown
+import ReactMarkdown from 'react-markdown';
+import { ItineraryMap } from './ItineraryMap'; // Added
+import { useEffect, useState } from 'react';
 
 interface ItineraryCardProps {
   itineraryData: ItineraryData;
@@ -44,7 +45,8 @@ export function ItineraryCard({ itineraryData, onSave, onRemove, onEditRequest, 
     crowdType: rawCrowdType, 
     startDate: rawStartDate, 
     endDate: rawEndDate, 
-    isDayTrip: rawIsDayTrip 
+    isDayTrip: rawIsDayTrip,
+    suggestedLocations 
   } = itineraryData; 
 
   const preferences = rawPreferences ?? "Preferences not specified.";
@@ -53,6 +55,13 @@ export function ItineraryCard({ itineraryData, onSave, onRemove, onEditRequest, 
   const createdAt = rawCreatedAt ? formatDistanceToNow(new Date(rawCreatedAt), { addSuffix: true }) : "Recently created";
   const crowdType = rawCrowdType ?? 'solo'; 
   const isDayTrip = rawIsDayTrip ?? false; 
+
+  const [mapsApiKey, setMapsApiKey] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Ensure this only runs client-side
+    setMapsApiKey(process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || null);
+  }, []);
 
   const parseAndFormatDate = (dateStr: string | undefined, defaultText: string = "Date not set"): string => {
     if (!dateStr) {
@@ -124,6 +133,22 @@ export function ItineraryCard({ itineraryData, onSave, onRemove, onEditRequest, 
               <ReactMarkdown>{itinerary}</ReactMarkdown>
             </div>
           </div>
+
+          {mapsApiKey && suggestedLocations && suggestedLocations.length > 0 && (
+            <>
+              <Separator />
+              <div>
+                <h3 className="font-semibold text-lg mb-2 flex items-center">
+                  <Map className="mr-2 h-5 w-5 text-muted-foreground" /> Notable Locations on Map
+                </h3>
+                <ItineraryMap 
+                  locations={suggestedLocations} 
+                  apiKey={mapsApiKey}
+                  destinationCity={destination || "Unknown Destination"}
+                />
+              </div>
+            </>
+          )}
 
           <Separator />
 

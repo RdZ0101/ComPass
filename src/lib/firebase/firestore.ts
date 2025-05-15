@@ -43,6 +43,7 @@ export async function getUserItineraries(userId: string): Promise<ItineraryData[
         startDate: data.startDate,
         endDate: data.endDate,
         isDayTrip: data.isDayTrip,
+        suggestedLocations: data.suggestedLocations || [], // Ensure it defaults to an empty array
       } as ItineraryData;
     });
   } catch (error) {
@@ -74,9 +75,4 @@ export async function updateItineraryForUser(userId: string, itineraryId: string
   try {
     const itineraryDocRef = doc(db, 'users', userId, 'itineraries', itineraryId);
     await updateDoc(itineraryDocRef, updatedItineraryData);
-  } catch (error) {
-    console.error("Error updating itinerary in Firestore:", error);
-    const specificMessage = error instanceof Error ? error.message : "Unknown Firestore error occurred while updating.";
-    throw new Error(`Failed to update itinerary: ${specificMessage}`);
-  }
-}
+  } catch (error)

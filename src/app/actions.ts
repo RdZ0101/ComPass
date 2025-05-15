@@ -1,4 +1,3 @@
-
 "use server";
 
 import { generateItinerary } from '@/ai/flows/itinerary-generation';
@@ -34,7 +33,7 @@ export async function runGenerateItineraryAction(
 
     const result: GenerateItineraryOutput = await generateItinerary(aiInput);
     
-    if (result.itinerary) {
+    if (result.itinerary && result.suggestedLocations) {
       const itineraryData: ItineraryData = {
         id: new Date().toISOString(),
         destination: input.destination,
@@ -46,10 +45,11 @@ export async function runGenerateItineraryAction(
         startDate: input.startDate,
         endDate: input.isDayTrip ? undefined : input.endDate,
         isDayTrip: input.isDayTrip,
+        suggestedLocations: result.suggestedLocations, // Added
       };
       return { data: itineraryData };
     }
-    return { error: "Failed to generate itinerary content." };
+    return { error: "Failed to generate itinerary content or suggested locations." };
   } catch (e) {
     console.error("Error generating itinerary:", e);
     const errorMessage = e instanceof Error ? e.message : "An unknown error occurred during itinerary generation.";

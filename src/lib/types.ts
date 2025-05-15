@@ -1,4 +1,3 @@
-
 export type CrowdType = "solo" | "couple" | "family" | "friends" | "business";
 
 export interface ItineraryData {
@@ -12,6 +11,7 @@ export interface ItineraryData {
   startDate: string; // YYYY-MM-DD
   endDate?: string; // YYYY-MM-DD
   isDayTrip: boolean;
+  suggestedLocations?: string[]; // Added for map integration
 }
 
 export interface ItineraryGenerationInput {
