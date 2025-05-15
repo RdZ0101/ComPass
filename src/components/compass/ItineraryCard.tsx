@@ -15,12 +15,13 @@ import { Separator } from "@/components/ui/separator";
 import { Heart, Trash2, ThermometerSnowflake, CloudSun, MapPin, CalendarDays, Edit3, Users, Sun } from 'lucide-react';
 import type { ItineraryData, CrowdType } from "@/lib/types";
 import { format, parseISO, formatDistanceToNow } from 'date-fns';
+import ReactMarkdown from 'react-markdown'; // Import ReactMarkdown
 
 interface ItineraryCardProps {
   itineraryData: ItineraryData;
   onSave?: (itinerary: ItineraryData) => void;
   onRemove?: (id: string) => void;
-  onEditRequest?: (itinerary: ItineraryData) => void; // Renamed from onUpdate and simplified
+  onEditRequest?: (itinerary: ItineraryData) => void;
   isSaved?: boolean;
 }
 
@@ -119,8 +120,8 @@ export function ItineraryCard({ itineraryData, onSave, onRemove, onEditRequest, 
 
           <div>
             <h3 className="font-semibold text-lg mb-1">Your Itinerary</h3>
-            <div className="prose prose-sm max-w-none text-foreground whitespace-pre-wrap p-3 border rounded-md bg-card">
-              {itinerary}
+            <div className="prose prose-sm max-w-none text-foreground p-3 border rounded-md bg-card">
+              <ReactMarkdown>{itinerary}</ReactMarkdown>
             </div>
           </div>
 
