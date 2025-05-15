@@ -73,11 +73,10 @@ export async function deleteItineraryForUser(userId: string, itineraryId: string
 export async function updateItineraryForUser(userId: string, itineraryId: string, updatedItineraryData: Partial<ItineraryData>): Promise<void> {
   try {
     const itineraryDocRef = doc(db, 'users', userId, 'itineraries', itineraryId);
-    await updateDoc(itineraryDocRef, updatedItineraryData as any); // Use `as any` because updateDoc expects `DocumentData`
+    await updateDoc(itineraryDocRef, updatedItineraryData);
   } catch (error) {
     console.error("Error updating itinerary in Firestore:", error);
     const specificMessage = error instanceof Error ? error.message : "Unknown Firestore error occurred while updating.";
     throw new Error(`Failed to update itinerary: ${specificMessage}`);
   }
 }
-

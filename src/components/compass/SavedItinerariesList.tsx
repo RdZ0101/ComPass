@@ -1,15 +1,17 @@
+
 "use client";
 
 import type { ItineraryData } from "@/lib/types";
 import { ItineraryCard } from "./ItineraryCard";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface SavedItinerariesListProps {
   savedItineraries: ItineraryData[];
   onRemove: (id: string) => void;
+  onEditRequest: (itinerary: ItineraryData) => void; // Added prop
 }
 
-export function SavedItinerariesList({ savedItineraries, onRemove }: SavedItinerariesListProps) {
+export function SavedItinerariesList({ savedItineraries, onRemove, onEditRequest }: SavedItinerariesListProps) {
+
   if (savedItineraries.length === 0) {
     return (
       <div className="text-center py-8">
@@ -31,6 +33,7 @@ export function SavedItinerariesList({ savedItineraries, onRemove }: SavedItiner
             key={itinerary.id}
             itineraryData={itinerary}
             onRemove={onRemove}
+            onEditRequest={onEditRequest} // Pass down prop
             isSaved={true}
           />
         ))}

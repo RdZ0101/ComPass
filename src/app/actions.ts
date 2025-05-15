@@ -57,7 +57,7 @@ export async function runGenerateItineraryAction(
   }
 }
 
-export async function updateItinerary(userId: string, itineraryId: string, updatedItineraryData: Partial<ItineraryData>): Promise<{ success: boolean; error?: string }> {
+export async function updateItineraryAction(userId: string, itineraryId: string, updatedItineraryData: Partial<ItineraryData>): Promise<{ success: boolean; error?: string }> {
   try {
     await updateItineraryForUser(userId, itineraryId, updatedItineraryData);
     return { success: true };

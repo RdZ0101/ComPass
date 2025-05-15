@@ -10,12 +10,13 @@ import { LoadingSpinner } from "@/components/compass/LoadingSpinner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { runGenerateItineraryAction } from "./actions";
+import { runGenerateItineraryAction, updateItineraryAction } from "./actions"; // Added updateItineraryAction
 import type { ItineraryData, ItineraryGenerationInput } from "@/lib/types";
 import { BookHeart, History, AlertCircle, Loader2, DatabaseBackup } from "lucide-react";
 import { Toaster } from "@/components/ui/toaster";
 import { useAuth } from "@/contexts/AuthContext";
 import { getUserItineraries, saveItineraryForUser, deleteItineraryForUser } from "@/lib/firebase/firestore";
+import { EditItineraryModal } from "@/components/compass/EditItineraryModal"; // Added EditItineraryModal
 
 export default function HomePage() {
   const [generatedItinerary, setGeneratedItinerary] = useState<ItineraryData | null>(null);
@@ -29,6 +30,10 @@ export default function HomePage() {
   
   const { toast } = useToast();
   const [hasMounted, setHasMounted] = useState(false);
+
+  // State for Edit Modal
+  const [editingItinerary, setEditingItinerary] = useState<ItineraryData | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   useEffect(() => {
     setHasMounted(true);
@@ -51,6 +56,8 @@ export default function HomePage() {
           let toastDescription = `Could not load your itineraries. Details: ${errorMessage}.`;
           if (errorMessage.toLowerCase().includes("index") || errorMessage.toLowerCase().includes("order by") || errorMessage.toLowerCase().includes("order_by")) {
             toastDescription += "\n\nThis often indicates a missing Firestore index for the 'createdAt' field. Please check your browser's developer console (usually F12) for a more specific error message from Firebase. It might include a direct link to create the required index in your Firebase project console (Firestore Database > Indexes).";
+          } else if (errorMessage.toLowerCase().includes("permission")){
+            toastDescription += "\n\nPlease check your Firestore security rules to ensure you have permission to read this data. The browser console may have more details.";
           } else {
             toastDescription += "\n\nPlease check your browser's developer console for more specific error details from Firebase.";
           }
@@ -59,7 +66,7 @@ export default function HomePage() {
             variant: "destructive", 
             title: "Error Loading Saved Itineraries", 
             description: toastDescription,
-            duration: 20000 // Increased duration for readability
+            duration: 20000 
           });
         } finally {
           setIsFetchingItineraries(false);
@@ -154,6 +161,46 @@ export default function HomePage() {
     }
   };
 
+  const handleOpenEditModal = (itinerary: ItineraryData) => {
+    setEditingItinerary(itinerary);
+    setIsEditModalOpen(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+    setEditingItinerary(null);
+  };
+
+  const handleConfirmUpdate = async (updatedItinerary: ItineraryData) => {
+    if (!user || !editingItinerary) return;
+
+    const result = await updateItineraryAction(user.uid, editingItinerary.id, { itinerary: updatedItinerary.itinerary });
+
+    if (result.success) {
+      // Update local state for saved itineraries
+      setSavedItineraries(prev => 
+        prev.map(item => item.id === editingItinerary.id ? { ...item, itinerary: updatedItinerary.itinerary } : item)
+             .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      );
+      // Update generated itinerary if it's the one being edited
+      if (generatedItinerary && generatedItinerary.id === editingItinerary.id) {
+        setGeneratedItinerary(prev => prev ? { ...prev, itinerary: updatedItinerary.itinerary } : null);
+      }
+      toast({
+        title: "Itinerary Updated",
+        description: "Your changes have been saved.",
+        className: "bg-accent text-accent-foreground border-green-500",
+      });
+      handleCloseEditModal();
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Update Failed",
+        description: result.error || "Could not update itinerary.",
+      });
+    }
+  };
+
   const isItinerarySaved = (itineraryId: string): boolean => {
     if (!hasMounted || !user) return false; 
     return savedItineraries.some(saved => saved.id === itineraryId);
@@ -186,6 +233,7 @@ export default function HomePage() {
               itineraryData={generatedItinerary}
               onSave={handleSaveItinerary}
               isSaved={isItinerarySaved(generatedItinerary.id)}
+              onEditRequest={handleOpenEditModal} // Add edit handler
             />
           </section>
         )}
@@ -231,6 +279,7 @@ export default function HomePage() {
             <SavedItinerariesList
               savedItineraries={savedItineraries}
               onRemove={handleRemoveItinerary}
+              onEditRequest={handleOpenEditModal} // Pass edit handler
             />
           )}
         </section>
@@ -241,6 +290,14 @@ export default function HomePage() {
         </p>
       </footer>
       <Toaster />
+      {isEditModalOpen && editingItinerary && (
+        <EditItineraryModal
+          isOpen={isEditModalOpen}
+          itineraryToEdit={editingItinerary}
+          onSave={handleConfirmUpdate}
+          onCancel={handleCloseEditModal}
+        />
+      )}
     </div>
   );
 }

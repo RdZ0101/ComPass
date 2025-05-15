@@ -13,15 +13,15 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Heart, Trash2, ThermometerSnowflake, CloudSun, MapPin, CalendarDays, Edit3, Users, Sun } from 'lucide-react';
-import type { ItineraryData, CrowdType, UpdateItineraryParams } from "@/lib/types";
+import type { ItineraryData, CrowdType } from "@/lib/types";
 import { format, parseISO, formatDistanceToNow } from 'date-fns';
 
 interface ItineraryCardProps {
   itineraryData: ItineraryData;
   onSave?: (itinerary: ItineraryData) => void;
   onRemove?: (id: string) => void;
+  onEditRequest?: (itinerary: ItineraryData) => void; // Renamed from onUpdate and simplified
   isSaved?: boolean;
- onUpdate?: (updateData: UpdateItineraryParams) => Promise<void>;
 }
 
 const crowdTypeLabels: Record<CrowdType, string> = {
@@ -32,7 +32,7 @@ const crowdTypeLabels: Record<CrowdType, string> = {
   business: "Business Trip",
 };
 
-export function ItineraryCard({ itineraryData, onSave, onRemove, isSaved }: ItineraryCardProps) {
+export function ItineraryCard({ itineraryData, onSave, onRemove, onEditRequest, isSaved }: ItineraryCardProps) {
   const {
     id, 
     destination, 
@@ -44,15 +44,14 @@ export function ItineraryCard({ itineraryData, onSave, onRemove, isSaved }: Itin
     startDate: rawStartDate, 
     endDate: rawEndDate, 
     isDayTrip: rawIsDayTrip 
-  } = itineraryData; // Destructure itineraryData directly
+  } = itineraryData; 
 
-  // Provide defaults for potentially missing fields
   const preferences = rawPreferences ?? "Preferences not specified.";
   const itinerary = rawItinerary ?? "Itinerary details not available.";
   const weather = rawWeather ?? "Weather data unavailable.";
   const createdAt = rawCreatedAt ? formatDistanceToNow(new Date(rawCreatedAt), { addSuffix: true }) : "Recently created";
-  const crowdType = rawCrowdType ?? 'solo'; // Default if undefined
-  const isDayTrip = rawIsDayTrip ?? false; // Default if undefined
+  const crowdType = rawCrowdType ?? 'solo'; 
+  const isDayTrip = rawIsDayTrip ?? false; 
 
   const parseAndFormatDate = (dateStr: string | undefined, defaultText: string = "Date not set"): string => {
     if (!dateStr) {
@@ -67,7 +66,7 @@ export function ItineraryCard({ itineraryData, onSave, onRemove, isSaved }: Itin
   };
 
   const formattedStartDate = parseAndFormatDate(rawStartDate);
-  const formattedEndDate = rawEndDate ? parseAndFormatDate(rawEndDate, "") : ""; // Allow empty if rawEndDate is undefined
+  const formattedEndDate = rawEndDate ? parseAndFormatDate(rawEndDate, "") : ""; 
 
   let tripDurationString = "Trip dates not specified";
   if (formattedStartDate !== "Date not set" && formattedStartDate !== "Invalid Date") {
@@ -77,11 +76,10 @@ export function ItineraryCard({ itineraryData, onSave, onRemove, isSaved }: Itin
       if (formattedEndDate && formattedEndDate !== "Invalid Date") {
         tripDurationString = `From ${formattedStartDate} to ${formattedEndDate}`;
       } else {
-        // If it's not a day trip but endDate is missing/invalid, just show start date
         tripDurationString = `Trip starting ${formattedStartDate}`;
       }
     }
-  } else if (isDayTrip) { // If startDate is not set but it's a day trip
+  } else if (isDayTrip) { 
     tripDurationString = "Day trip (date not set)";
   }
 
@@ -145,10 +143,11 @@ export function ItineraryCard({ itineraryData, onSave, onRemove, isSaved }: Itin
             <Heart className="mr-2 h-4 w-4 fill-current" /> Saved
           </Badge>
         )}
-        {/* Add Edit Button */}
-        <Button variant="ghost" onClick={() => {/* TODO: Open Edit Modal */}} className="text-primary hover:bg-primary/10">
-          <Edit3 className="mr-2 h-4 w-4" /> Edit
-        </Button>
+        {onEditRequest && (
+          <Button variant="ghost" onClick={() => onEditRequest(itineraryData)} className="text-primary hover:bg-primary/10">
+            <Edit3 className="mr-2 h-4 w-4" /> Edit
+          </Button>
+        )}
         {onRemove && (
           <Button variant="ghost" onClick={() => onRemove(id)} className="text-destructive hover:bg-destructive/10">
             <Trash2 className="mr-2 h-4 w-4" /> Remove
