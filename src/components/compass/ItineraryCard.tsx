@@ -11,12 +11,42 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Heart, Trash2, ThermometerSnowflake, CloudSun, MapPin, CalendarDays, Edit3, Users, Sun, Map } from 'lucide-react';
-import type { ItineraryData, CrowdType } from "@/lib/types";
+import { Heart, Trash2, ThermometerSnowflake, CloudSun, MapPin, CalendarDays, Edit3, Users, Sun, Map, Clock, DollarSign } from 'lucide-react'; // Added Clock, DollarSign
+import type { CrowdType } from "@/lib/types"; // Assuming CrowdType is defined here
 import { format, parseISO, formatDistanceToNow } from 'date-fns';
-import ReactMarkdown from 'react-markdown';
-import { ItineraryMap } from './ItineraryMap'; // Added
+// import ReactMarkdown from 'react-markdown'; // No longer needed
+import { ItineraryMap } from './ItineraryMap';
 import { useEffect, useState } from 'react';
+
+// Define the exact types for your new itinerary structure
+interface Activity {
+  name: string;
+  description: string;
+  type: string;
+  cost: string;
+  arrival_time: string;
+  departure_time: string;
+}
+
+interface DailyItinerary {
+  Day: number;
+  activities: Activity[];
+}
+
+// Update ItineraryData to reflect the new structure for 'itinerary'
+export interface ItineraryData {
+  id: string;
+  destination: string;
+  preferences?: string;
+  itinerary: DailyItinerary[]; // Changed to array of DailyItinerary
+  weather?: string;
+  createdAt?: string;
+  crowdType?: CrowdType;
+  startDate?: string;
+  endDate?: string;
+  isDayTrip?: boolean;
+  suggestedLocations?: string[];
+}
 
 interface ItineraryCardProps {
   itineraryData: ItineraryData;
@@ -36,31 +66,31 @@ const crowdTypeLabels: Record<CrowdType, string> = {
 
 export function ItineraryCard({ itineraryData, onSave, onRemove, onEditRequest, isSaved }: ItineraryCardProps) {
   const {
-    id, 
-    destination, 
-    preferences: rawPreferences, 
-    itinerary: rawItinerary, 
-    weather: rawWeather, 
-    createdAt: rawCreatedAt, 
-    crowdType: rawCrowdType, 
-    startDate: rawStartDate, 
-    endDate: rawEndDate, 
+    id,
+    destination,
+    preferences: rawPreferences,
+    itinerary: rawItinerary, // This will now be an array
+    weather: rawWeather,
+    createdAt: rawCreatedAt,
+    crowdType: rawCrowdType,
+    startDate: rawStartDate,
+    endDate: rawEndDate,
     isDayTrip: rawIsDayTrip,
-    suggestedLocations 
-  } = itineraryData; 
+    suggestedLocations
+  } = itineraryData;
 
   const preferences = rawPreferences ?? "Preferences not specified.";
-  const itinerary = rawItinerary ?? "Itinerary details not available.";
+  const itinerary = rawItinerary ?? []; // Default to an empty array for safety
   const weather = rawWeather ?? "Weather data unavailable.";
   const createdAt = rawCreatedAt ? formatDistanceToNow(new Date(rawCreatedAt), { addSuffix: true }) : "Recently created";
-  const crowdType = rawCrowdType ?? 'solo'; 
-  const isDayTrip = rawIsDayTrip ?? false; 
+  const crowdType = rawCrowdType ?? 'solo';
+  const isDayTrip = rawIsDayTrip ?? false;
 
   const [mapsApiKey, setMapsApiKey] = useState<string | null>(null);
 
   useEffect(() => {
     // Ensure this only runs client-side
-    setMapsApiKey(process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || null);
+    setMapsApiKey(process.env.NEXT_PUBLIC_Maps_API_KEY || null);
   }, []);
 
   const parseAndFormatDate = (dateStr: string | undefined, defaultText: string = "Date not set"): string => {
@@ -76,7 +106,7 @@ export function ItineraryCard({ itineraryData, onSave, onRemove, onEditRequest, 
   };
 
   const formattedStartDate = parseAndFormatDate(rawStartDate);
-  const formattedEndDate = rawEndDate ? parseAndFormatDate(rawEndDate, "") : ""; 
+  const formattedEndDate = rawEndDate ? parseAndFormatDate(rawEndDate, "") : "";
 
   let tripDurationString = "Trip dates not specified";
   if (formattedStartDate !== "Date not set" && formattedStartDate !== "Invalid Date") {
@@ -89,7 +119,7 @@ export function ItineraryCard({ itineraryData, onSave, onRemove, onEditRequest, 
         tripDurationString = `Trip starting ${formattedStartDate}`;
       }
     }
-  } else if (isDayTrip) { 
+  } else if (isDayTrip) {
     tripDurationString = "Day trip (date not set)";
   }
 
@@ -130,7 +160,27 @@ export function ItineraryCard({ itineraryData, onSave, onRemove, onEditRequest, 
           <div>
             <h3 className="font-semibold text-lg mb-1">Your Itinerary</h3>
             <div className="prose prose-sm max-w-none text-foreground p-3 border rounded-md bg-card">
-              <ReactMarkdown>{itinerary}</ReactMarkdown>
+              {itinerary.length > 0 ? (
+                itinerary.map((dayPlan, index) => (
+                  <div key={index} className="mb-6">
+                    <h4 className="text-xl font-bold text-primary mb-3">Day {dayPlan.Day}</h4>
+                    {dayPlan.activities.map((activity, activityIndex) => (
+                      <div key={activityIndex} className="mb-4 p-3 border rounded-md bg-background shadow-sm">
+                        <h5 className="text-lg font-semibold text-accent mb-1">{activity.name}</h5>
+                        <p className="text-sm text-muted-foreground mb-2">{activity.description}</p>
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-600">
+                          {activity.type && <Badge variant="secondary">{activity.type}</Badge>}
+                          {activity.cost && <span className="flex items-center"><DollarSign className="mr-1 h-4 w-4 text-green-600" /> {activity.cost}</span>}
+                          {activity.arrival_time && <span className="flex items-center"><Clock className="mr-1 h-4 w-4 text-blue-500" /> {activity.arrival_time}</span>}
+                          {activity.departure_time && <span className="flex items-center"><Clock className="mr-1 h-4 w-4 text-red-500" /> {activity.departure_time} (Departure)</span>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ))
+              ) : (
+                <p>Itinerary details not available.</p>
+              )}
             </div>
           </div>
 
@@ -141,8 +191,8 @@ export function ItineraryCard({ itineraryData, onSave, onRemove, onEditRequest, 
                 <h3 className="font-semibold text-lg mb-2 flex items-center">
                   <Map className="mr-2 h-5 w-5 text-muted-foreground" /> Notable Locations on Map
                 </h3>
-                <ItineraryMap 
-                  locations={suggestedLocations} 
+                <ItineraryMap
+                  locations={suggestedLocations}
                   apiKey={mapsApiKey}
                   destinationCity={destination || "Unknown Destination"}
                 />
