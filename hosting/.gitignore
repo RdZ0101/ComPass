@@ -28,9 +28,7 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-
-# local env files
-.env*.local
+.pnpm-debug.log*
 
 # vercel
 .vercel
@@ -38,3 +36,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+.genkit/*
+.env*
+.apphosting.yaml
+
+# firebase
+firebase-debug.log
+firestore-debug.log
