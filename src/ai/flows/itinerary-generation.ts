@@ -24,7 +24,7 @@ const GenerateItineraryInputSchema = z.object({
 export type GenerateItineraryInput = z.infer<typeof GenerateItineraryInputSchema>;
 
 const GenerateItineraryOutputSchema = z.object({
-  itinerary: z.string().describe('The generated travel itinerary.'),
+  itinerary: z.string().describe('The generated travel itinerary, formatted as Markdown. Use headings, lists, bold text, etc., to make it readable and engaging.'),
 });
 export type GenerateItineraryOutput = z.infer<typeof GenerateItineraryOutputSchema>;
 
@@ -49,7 +49,7 @@ The trip is from {{startDate}} to {{endDate}}.
 {{/if}}
 User Preferences: {{{preferences}}}
 
-Provide a detailed itinerary based on this information. Ensure the output is engaging and practical.
+Provide a detailed itinerary based on this information. **Format the itinerary using Markdown** (e.g., using # for headings, - or * for bullet points, **bold text** for emphasis). Ensure the output is engaging, practical, and well-structured.
 Itinerary:`,
 });
 
