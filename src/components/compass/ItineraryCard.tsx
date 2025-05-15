@@ -167,10 +167,10 @@ export function ItineraryCard({ itineraryData, onSave, onRemove, onEditRequest, 
                     {dayPlan.activities.map((activity, activityIndex) => (
                       <div key={activityIndex} className="mb-4 p-3 border rounded-md bg-background shadow-sm">
                         <h5 className="text-lg font-semibold text-accent mb-1">{activity.name}</h5>
-                        <p className="text-sm text-muted-foreground mb-2">{activity.description}</p>
+                        <p className="text-sm text-muted-foreground mb-2">{activity.description?.toString()}</p>
                         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-600">
                           {activity.type && <Badge variant="secondary">{activity.type}</Badge>}
-                          {activity.cost && <span className="flex items-center"><DollarSign className="mr-1 h-4 w-4 text-green-600" /> {activity.cost}</span>}
+                          {activity.cost && <span className="flex items-center"><DollarSign className="mr-1 h-4 w-4 text-green-600" /> {activity.cost?.toString()}</span>}
                           {activity.arrival_time && <span className="flex items-center"><Clock className="mr-1 h-4 w-4 text-blue-500" /> {activity.arrival_time}</span>}
                           {activity.departure_time && <span className="flex items-center"><Clock className="mr-1 h-4 w-4 text-red-500" /> {activity.departure_time} (Departure)</span>}
                         </div>
